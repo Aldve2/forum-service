@@ -75,7 +75,7 @@ jobs:
              --arg NAME "${{ env.CONTAINER_NAME }}" \
              --arg UVICORN_HOST "0.0.0.0" \
              --arg UVICORN_PORT "10101" \
-             --arg MONGO_URI "mongodb://${{ secrets.MONGO_IP }}:27017" \
+             --arg MONGO_URI "mongodb://admin:admin123@${{ secrets.MONGO_IP }}:27017/projectManagement?authSource=admin" \
              --arg MONGO_DATABASE_NAME "projectManagement" \
              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
              .containerDefinitions |= map(
