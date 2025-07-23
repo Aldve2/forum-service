@@ -78,19 +78,21 @@ jobs:
              --arg MONGO_URI "mongodb://admin:admin123@${{ secrets.MONGO_IP }}:27017/projectManagement?authSource=admin" \
              --arg MONGO_DATABASE_NAME "projectManagement" \
              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy) |
-             .containerDefinitions |= map(
-               if .name == $NAME then 
-                 .image = $IMAGE |
-                 .environment += [
-                   { "name": "UVICORN_HOST", "value": $UVICORN_HOST },
-                   { "name": "UVICORN_PORT", "value": $UVICORN_PORT },
-                   { "name": "MONGO_URI", "value": $MONGO_URI },
-                   { "name": "MONGO_DATABASE_NAME", "value": $MONGO_DATABASE_NAME }
-                 ]
-               else . end
-             ) |
-             if .executionRoleArn == null then del(.executionRoleArn) else . end' \
-             task-definition.json > updated-task-definition.json
+              .containerDefinitions |= map(
+                if .name == $NAME then 
+                  .image = $IMAGE |
+                  (.environment //= []) |
+                  (.environment |= 
+                    map(select(.name != "UVICORN_HOST" and .name != "UVICORN_PORT" and .name != "MONGO_URI" and .name != "MONGO_DATABASE_NAME")) + [
+                      { "name": "UVICORN_HOST", "value": $UVICORN_HOST },
+                      { "name": "UVICORN_PORT", "value": $UVICORN_PORT },
+                      { "name": "MONGO_URI", "value": $MONGO_URI },
+                      { "name": "MONGO_DATABASE_NAME", "value": $MONGO_DATABASE_NAME }
+                    ])
+                else . end
+              ) |
+              if .executionRoleArn == null then del(.executionRoleArn) else . end' \
+              task-definition.json > updated-task-definition.json
           echo "✓ Task definition updated with Mongo configuration"
 
       - name: Register new task definition
